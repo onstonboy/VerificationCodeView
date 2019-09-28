@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="VerificationCodeView">
+        <attr name="spacingItem" format="dimension"/>
+        <attr name="inputWidth" format="dimension"/>
+        <attr name="inputHeight" format="dimension"/>
+        <attr name="radius" format="dimension"/>
+        <attr name="inputCount" format="integer"/>
+        <attr name="lineColor" format="color"/>
+        <attr name="cursorColor" format="color"/>
+        <attr name="textColor" format="color"/>
+        <attr name="textSize" format="dimension"/>
+        <attr name="textStyle" format="flags">
+            <flag name="normal" value="0"/>
+            <flag name="bold" value="1"/>
+            <flag name="italic" value="2"/>
+        </attr>
+    </declare-styleable>
+</resources>

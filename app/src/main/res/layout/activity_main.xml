@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <com.ccc.vcv.VerificationCodeView
+        android:id="@+id/editText"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:spacingItem="10dp"
+        app:radius="@dimen/dp_5"
+        app:textSize="28sp"
+        app:cursorColor="@android:color/holo_blue_dark"
+        app:textColor="@android:color/holo_blue_dark"
+        app:inputWidth="35dp"
+        app:inputHeight="3dp"
+        />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
