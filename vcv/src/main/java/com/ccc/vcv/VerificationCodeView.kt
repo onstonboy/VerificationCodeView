@@ -202,7 +202,7 @@ class VerificationCodeView : EditText {
             textSize = mTextSize
             isAntiAlias = true
             style = Paint.Style.FILL
-            setTypeface(Typeface.DEFAULT, mTextStyle)
+            typeface = Typeface.create(Typeface.DEFAULT, mTextStyle)
         }
         mCursorPaint.apply {
             color = mTextColor
