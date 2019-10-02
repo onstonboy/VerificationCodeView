@@ -16,6 +16,7 @@
         app:spacingItem="10dp"
         app:radius="@dimen/dp_5"
         app:textSize="28sp"
+        app:textStyle="bold"
         app:cursorColor="@android:color/holo_blue_dark"
         app:textColor="@android:color/holo_blue_dark"
         app:inputWidth="35dp"
