@@ -102,8 +102,10 @@ class VerificationCodeView : EditText {
         super.onDraw(canvas)
         if (mInputViewOffsets.isEmpty()) return
         if (isFocused) {
+            mIsDrawCursor = !mIsDrawCursor
             if (!mDrawingCursor) runDrawCursor()
         } else {
+            mIsDrawCursor = false
             mDrawingCursor = false
             mHandler.removeCallbacks(mRunnable)
         }
@@ -149,7 +151,6 @@ class VerificationCodeView : EditText {
                 mCursorPaint
             )
         }
-        mIsDrawCursor = !mIsDrawCursor
         mInputViewOffsets.forEach { inputOffset ->
             canvas.drawRoundRect(
                 inputOffset.left,
