@@ -37,6 +37,7 @@ class VerificationCodeView : EditText {
     private var mTexts = ArrayList<Char>()
     private var mOldTextLength = 0
     private var mIsDrawCursor = true
+    private var mDrawingCursor = false
     private var mHandler = Handler()
     private var mRunnable: Runnable? = null
 
@@ -88,22 +89,24 @@ class VerificationCodeView : EditText {
             typeArray.recycle()
         }
         initViews()
-        mRunnable = Runnable {
-            setSelection(text.length)
-            invalidate()
-            mHandler.postDelayed(mRunnable, 500)
-        }
-        mHandler.postDelayed(mRunnable, 500)
+        runDrawCursor()
     }
 
     override fun onDetachedFromWindow() {
         mHandler.removeCallbacks(mRunnable)
+        mDrawingCursor = false
         super.onDetachedFromWindow()
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (mInputViewOffsets.isEmpty()) return
+        if (isFocused) {
+            if (!mDrawingCursor) runDrawCursor()
+        } else {
+            mDrawingCursor = false
+            mHandler.removeCallbacks(mRunnable)
+        }
         var cursorLeftOffset = 0f
         for ((index, text) in mTexts.withIndex()) {
             mTextPaint.getTextBounds(text.toString(), 0, 1, mTextBound)
@@ -258,6 +261,16 @@ class VerificationCodeView : EditText {
                 )
             }
         }
+    }
+
+    private fun runDrawCursor() {
+        mDrawingCursor = true
+        mRunnable = Runnable {
+            setSelection(text.length)
+            invalidate()
+            mHandler.postDelayed(mRunnable, 500)
+        }
+        mHandler.postDelayed(mRunnable, 500)
     }
 
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(
