@@ -15,6 +15,7 @@ import android.util.Log
 import android.view.View
 import android.widget.EditText
 import androidx.core.content.ContextCompat
+import kotlin.math.min
 
 class VerificationCodeView : EditText {
 
@@ -40,8 +41,13 @@ class VerificationCodeView : EditText {
     private var mDrawingCursor = false
     private var mHandler = Handler()
     private var mRunnable: Runnable? = null
+    private var mOnInputVerificationCode: OnInputVerificationCodeListener? = null
 
     constructor(context: Context) : super(context)
+
+    constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(
+        context, attrs, defStyleAttr
+    )
 
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
         val typeArray =
@@ -176,6 +182,10 @@ class VerificationCodeView : EditText {
         initData(height.toInt())
     }
 
+    fun setOnInputVerificationCodeListener(onInputVerificationCode: OnInputVerificationCodeListener?) {
+        mOnInputVerificationCode = onInputVerificationCode
+    }
+
     private fun measureDimension(desiredSize: Int, measureSpec: Int): Int {
         var result: Int
         val specMode = View.MeasureSpec.getMode(measureSpec)
@@ -186,7 +196,7 @@ class VerificationCodeView : EditText {
         } else {
             result = desiredSize
             if (specMode == View.MeasureSpec.AT_MOST) {
-                result = Math.min(result, specSize)
+                result = min(result, specSize)
             }
         }
 
@@ -232,6 +242,9 @@ class VerificationCodeView : EditText {
             }
 
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                if (s.length >= mInputCount) {
+                    mOnInputVerificationCode?.onInputVerificationCodeComplete()
+                }
             }
         })
     }
@@ -274,12 +287,12 @@ class VerificationCodeView : EditText {
         mHandler.postDelayed(mRunnable, 500)
     }
 
-    constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(
-        context, attrs, defStyleAttr
-    )
-
     companion object {
         private const val PADDING_DEFAULT = 30f
         private const val CURSOR_WIDTH = 5f
+    }
+
+    interface OnInputVerificationCodeListener {
+        fun onInputVerificationCodeComplete()
     }
 }
