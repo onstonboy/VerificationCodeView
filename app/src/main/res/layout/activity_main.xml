@@ -7,7 +7,7 @@
     tools:context=".MainActivity">
 
     <com.ccc.vcv.VerificationCodeView
-        android:id="@+id/editText"
+        android:id="@+id/verificationView"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -24,7 +24,8 @@
         />
 
     <EditText
-        app:layout_constraintTop_toBottomOf="@+id/editText"
+        android:id="@+id/editText"
+        app:layout_constraintTop_toBottomOf="@+id/verificationView"
         android:layout_width="match_parent"
         android:layout_marginTop="20dp"
         android:layout_height="50dp"
