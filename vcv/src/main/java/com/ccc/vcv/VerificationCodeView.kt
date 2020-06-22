@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
-import android.graphics.Typeface
 import android.os.Handler
 import android.text.Editable
 import android.text.InputFilter
@@ -12,25 +11,27 @@ import android.text.InputType
 import android.text.TextWatcher
 import android.util.AttributeSet
 import android.util.Log
-import android.view.View
-import android.widget.EditText
+import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.content.ContextCompat
+import kotlin.math.ceil
 import kotlin.math.min
 
-class VerificationCodeView : EditText {
+class VerificationCodeView : AppCompatEditText {
 
     private var mSpaceItem: Float = DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_20)
     private var mInputWidth: Float = DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_30)
     private var mInputHeight: Float = DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_5)
+    private var mCursorHeight: Float = DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_5)
     private var mLineColor: Int = ContextCompat.getColor(context, android.R.color.black)
+    private var mLineActiveColor: Int = ContextCompat.getColor(context, R.color.color_active)
     private var mTextColor: Int = ContextCompat.getColor(context, android.R.color.black)
     private var mCursorColor: Int = ContextCompat.getColor(context, android.R.color.black)
     private var mTextSize: Float =
         DimensionUtils.getDimensionWithScaledDensity(context, R.dimen.sp_18)
-    private var mTextStyle: Int = Typeface.BOLD
     private var mRadius: Float = DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_5)
     private var mInputCount: Int = 6
     private var mLinePaint = Paint()
+    private var mLineFocusPaint = Paint()
     private var mTextPaint = Paint()
     private var mCursorPaint = Paint()
     private var mTextBound = Rect()
@@ -39,9 +40,17 @@ class VerificationCodeView : EditText {
     private var mOldTextLength = 0
     private var mIsDrawCursor = true
     private var mDrawingCursor = false
+    private var mStyle: Style = Style.UNDERLINE
     private var mHandler = Handler()
     private var mRunnable: Runnable? = null
     private var mOnInputVerificationCode: OnInputVerificationCodeListener? = null
+
+    var style: Style = mStyle
+        get() = mStyle
+        set(value) {
+            mStyle = value
+            field = value
+        }
 
     constructor(context: Context) : super(context)
 
@@ -54,48 +63,57 @@ class VerificationCodeView : EditText {
             context.obtainStyledAttributes(attrs, R.styleable.VerificationCodeView, 0, 0)
         try {
             mSpaceItem = typeArray.getDimension(
-                R.styleable.VerificationCodeView_spacingItem,
+                R.styleable.VerificationCodeView_vcv_spacingItem,
                 DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_20)
             )
             mInputWidth = typeArray.getDimension(
-                R.styleable.VerificationCodeView_inputWidth,
+                R.styleable.VerificationCodeView_vcv_inputWidth,
                 DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_30)
             )
             mInputHeight = typeArray.getDimension(
-                R.styleable.VerificationCodeView_inputHeight,
+                R.styleable.VerificationCodeView_vcv_inputHeight,
+                DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_5)
+            )
+            mCursorHeight = typeArray.getDimension(
+                R.styleable.VerificationCodeView_vcv_cursorHeight,
                 DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_5)
             )
             mRadius = typeArray.getDimension(
-                R.styleable.VerificationCodeView_radius,
+                R.styleable.VerificationCodeView_vcv_radius,
                 DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_5)
             )
             mInputCount = typeArray.getInt(
-                R.styleable.VerificationCodeView_inputCount, 6
+                R.styleable.VerificationCodeView_vcv_inputCount, 6
             )
             mTextSize = typeArray.getDimension(
-                R.styleable.VerificationCodeView_textSize,
+                R.styleable.VerificationCodeView_vcv_textSize,
                 DimensionUtils.getDimensionWithScaledDensity(context, R.dimen.sp_18)
             )
-            mTextStyle = typeArray.getInt(
-                R.styleable.VerificationCodeView_textStyle, Typeface.BOLD
+            mStyle = Style.fromValue(
+                typeArray.getInt(
+                    R.styleable.VerificationCodeView_vcv_style, Style.UNDERLINE.value()
+                )
             )
             mLineColor = typeArray.getColor(
-                R.styleable.VerificationCodeView_lineColor,
+                R.styleable.VerificationCodeView_vcv_lineColor,
                 ContextCompat.getColor(context, android.R.color.black)
             )
+            mLineActiveColor = typeArray.getColor(
+                R.styleable.VerificationCodeView_vcv_lineActiveColor,
+                ContextCompat.getColor(context, R.color.color_active)
+            )
             mTextColor = typeArray.getColor(
-                R.styleable.VerificationCodeView_textColor,
+                R.styleable.VerificationCodeView_vcv_textColor,
                 ContextCompat.getColor(context, android.R.color.black)
             )
             mCursorColor = typeArray.getColor(
-                R.styleable.VerificationCodeView_cursorColor,
+                R.styleable.VerificationCodeView_vcv_cursorColor,
                 ContextCompat.getColor(context, android.R.color.black)
             )
         } finally {
             typeArray.recycle()
         }
-        initViews()
-        runDrawCursor()
+        onCreate()
     }
 
     override fun onDetachedFromWindow() {
@@ -126,9 +144,9 @@ class VerificationCodeView : EditText {
                 centerPosition
             }
             cursorLeftOffset = if (index >= mInputViewOffsets.lastIndex) {
-                nextCenterPosition + mTextBound.width() / 2
+                nextCenterPosition + mTextBound.width() / 2 + 10f
             } else {
-                nextCenterPosition - CURSOR_WIDTH
+                nextCenterPosition - CURSOR_WIDTH_DEFAULT / 2
             }
             val textLeftOffset = if (text.toString() == "1") {
                 centerPosition - mTextBound.width()
@@ -138,26 +156,41 @@ class VerificationCodeView : EditText {
             canvas.drawText(
                 text.toString(),
                 textLeftOffset,
-                height - mInputHeight - (mTextBound.height() / 2),
+                mInputHeight / 2f + (mTextBound.height() / 2f),
                 mTextPaint
             )
         }
 
         if (mIsDrawCursor && mInputViewOffsets.isNotEmpty()) {
             if (cursorLeftOffset == 0f) {
-                val centerPosition =
-                    (mInputViewOffsets[0].left + mInputViewOffsets[0].right) / 2
-                cursorLeftOffset = centerPosition - CURSOR_WIDTH
+                cursorLeftOffset = (mInputViewOffsets[0].left + mInputViewOffsets[0].right) / 2
             }
             canvas.drawRect(
-                cursorLeftOffset + 10f,
-                height - mInputHeight - mTextBound.height() - paddingBottom,
-                cursorLeftOffset + 10f + CURSOR_WIDTH,
-                height.toFloat() - paddingBottom,
+                cursorLeftOffset,
+                mInputHeight / 2f - (mTextBound.height() / 2f) - context.resources.getDimension(R.dimen.dp_2),
+                cursorLeftOffset + CURSOR_WIDTH_DEFAULT,
+                mInputHeight / 2f + (mTextBound.height() / 2f) + context.resources.getDimension(R.dimen.dp_2),
                 mCursorPaint
             )
         }
-        mInputViewOffsets.forEach { inputOffset ->
+        mInputViewOffsets.forEachIndexed { index, inputOffset ->
+            val paint = when {
+                isFocused && mTexts.size == mInputCount -> {
+                    if (index == mTexts.lastIndex) {
+                        mLineFocusPaint
+                    } else {
+                        mLinePaint
+                    }
+                }
+                isFocused && mTexts.size < mInputCount -> {
+                    if (index == mTexts.size) {
+                        mLineFocusPaint
+                    } else {
+                        mLinePaint
+                    }
+                }
+                else -> mLinePaint
+            }
             canvas.drawRoundRect(
                 inputOffset.left,
                 inputOffset.top,
@@ -165,66 +198,47 @@ class VerificationCodeView : EditText {
                 inputOffset.bottom,
                 mRadius,
                 mRadius,
-                mLinePaint
+                paint
             )
         }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         mTextPaint.getTextBounds("1", 0, 1, mTextBound)
-        val height = mTextBound.height() + paddingTop + paddingBottom + mInputHeight
+        val height = mInputHeight
         var width = 0f
         for (index in 0 until mInputCount) {
             width += mSpaceItem + mInputWidth
         }
-        width += PADDING_DEFAULT * 2 + paddingRight + paddingLeft - mSpaceItem
-        setMeasuredDimension(width.toInt(), height.toInt())
-        initData(height.toInt())
+        width += PADDING_LEFT_DEFAULT * 2 + paddingRight + paddingLeft - mSpaceItem
+        setMeasuredDimension(ceil(width).toInt(), ceil(height).toInt())
+        updateInputViewOffsets()
     }
 
     fun setOnInputVerificationCodeListener(onInputVerificationCode: OnInputVerificationCodeListener?) {
         mOnInputVerificationCode = onInputVerificationCode
     }
 
-    private fun measureDimension(desiredSize: Int, measureSpec: Int): Int {
-        var result: Int
-        val specMode = View.MeasureSpec.getMode(measureSpec)
-        val specSize = View.MeasureSpec.getSize(measureSpec)
-
-        if (specMode == View.MeasureSpec.EXACTLY) {
-            result = specSize
-        } else {
-            result = desiredSize
-            if (specMode == View.MeasureSpec.AT_MOST) {
-                result = min(result, specSize)
-            }
-        }
-
-        if (result < desiredSize) {
-            Log.e("View", "The view is too small, the content might get cut")
-        }
-        return result
+    fun refresh() {
+        updateLinePaint()
+        updateInputViewOffsets()
+        invalidate()
     }
 
-    private fun initViews() {
-        mLinePaint.color = mLineColor
-        mTextPaint.apply {
-            color = mTextColor
-            textSize = mTextSize
-            isAntiAlias = true
-            style = Paint.Style.FILL
-            typeface = Typeface.create(Typeface.DEFAULT, mTextStyle)
-        }
-        mCursorPaint.apply {
-            color = mTextColor
-            style = Paint.Style.FILL
-        }
-        setBackgroundColor(ContextCompat.getColor(context, android.R.color.transparent))
-        setTextColor(ContextCompat.getColor(context, android.R.color.transparent))
-        inputType = InputType.TYPE_CLASS_NUMBER
-        isCursorVisible = false
-        filters = arrayOf<InputFilter>(InputFilter.LengthFilter(mInputCount))
+    private fun onCreate() {
+        initViews()
+        initPaints()
+        handleEvents()
+        runDrawCursor()
+    }
 
+    private fun initPaints() {
+        updateLinePaint()
+        updateTextPaint()
+        updateCursorPaint()
+    }
+
+    private fun handleEvents() {
         addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable) {
                 if (s.length > mInputCount) return
@@ -249,18 +263,101 @@ class VerificationCodeView : EditText {
         })
     }
 
-    private fun initData(height: Int) {
+    private fun measureDimension(desiredSize: Int, measureSpec: Int): Int {
+        var result: Int
+        val specMode = MeasureSpec.getMode(measureSpec)
+        val specSize = MeasureSpec.getSize(measureSpec)
+
+        if (specMode == MeasureSpec.EXACTLY) {
+            result = specSize
+        } else {
+            result = desiredSize
+            if (specMode == MeasureSpec.AT_MOST) {
+                result = min(result, specSize)
+            }
+        }
+
+        if (result < desiredSize) {
+            Log.e("View", "The view is too small, the content might get cut")
+        }
+        return result
+    }
+
+    private fun initViews() {
+        isLongClickable = false
+        height = ceil(mInputHeight).toInt()
+        setBackgroundColor(ContextCompat.getColor(context, android.R.color.transparent))
+        setTextColor(ContextCompat.getColor(context, android.R.color.transparent))
+        inputType = InputType.TYPE_CLASS_NUMBER
+        isCursorVisible = false
+        filters = arrayOf<InputFilter>(InputFilter.LengthFilter(mInputCount))
+    }
+
+    private fun updateCursorPaint() {
+        mCursorPaint.apply {
+            color = mTextColor
+            style = Paint.Style.FILL
+        }
+    }
+
+    private fun updateTextPaint() {
+        mTextPaint.apply {
+            color = mTextColor
+            textSize = mTextSize
+            isAntiAlias = true
+            style = Paint.Style.FILL
+            typeface = this@VerificationCodeView.typeface
+        }
+    }
+
+    private fun updateLinePaint() {
+        when (mStyle) {
+            Style.UNDERLINE -> {
+                mLinePaint = Paint().apply {
+                    color = mLineColor
+                }
+                mLineFocusPaint = Paint().apply {
+                    color = mLineActiveColor
+                }
+            }
+            else -> {
+                mLinePaint = Paint().apply {
+                    style = Paint.Style.STROKE
+                    strokeWidth = context.resources.getDimension(R.dimen.dp_1_5)
+                    color = mLineColor
+                }
+                mLineFocusPaint = Paint().apply {
+                    style = Paint.Style.STROKE
+                    strokeWidth = context.resources.getDimension(R.dimen.dp_1_5)
+                    color = mLineActiveColor
+                }
+            }
+        }
+    }
+
+    private fun updateInputViewOffsets() {
         mInputViewOffsets.clear()
-        val viewBottom = height - mInputHeight
-        val viewLeft = PADDING_DEFAULT
+        val viewLeft = PADDING_LEFT_DEFAULT
         for (index in 0 until mInputCount) {
+            val viewBottom = when (mStyle) {
+                Style.UNDERLINE -> {
+                    mInputHeight
+                }
+                else -> mInputHeight - PADDING_TOP_DEFAULT
+            }
+            val top = when (mStyle) {
+                Style.UNDERLINE -> {
+                    viewBottom - UNDERLINE_INPUT_HEIGHT_DEFAULT
+                }
+                else -> PADDING_TOP_DEFAULT
+            }
             if (mInputViewOffsets.isEmpty()) {
                 mInputViewOffsets.add(
                     InputOffset(
                         viewLeft,
-                        viewBottom,
+                        top,
                         mInputWidth + viewLeft,
-                        viewBottom + mInputHeight
+                        viewBottom
                     )
                 )
             } else {
@@ -268,9 +365,9 @@ class VerificationCodeView : EditText {
                 mInputViewOffsets.add(
                     InputOffset(
                         mInputViewOffsets[index - 1].right + mSpaceItem,
-                        viewBottom,
+                        top,
                         mInputViewOffsets[index - 1].right + mSpaceItem + mInputWidth,
-                        viewBottom + mInputHeight
+                        viewBottom
                     )
                 )
             }
@@ -280,16 +377,34 @@ class VerificationCodeView : EditText {
     private fun runDrawCursor() {
         mDrawingCursor = true
         mRunnable = Runnable {
-            setSelection(text.length)
+            setSelection(text?.length ?: 0)
             invalidate()
-            mHandler.postDelayed(mRunnable, 500)
+            mHandler.postDelayed(mRunnable, DELAY_CURSOR)
         }
-        mHandler.postDelayed(mRunnable, 500)
+        mHandler.postDelayed(mRunnable, DELAY_CURSOR)
+    }
+
+    enum class Style {
+        UNDERLINE {
+            override fun value(): Int = 0
+        },
+        BOX {
+            override fun value(): Int = 1
+        };
+
+        abstract fun value(): Int
+
+        companion object {
+            fun fromValue(value: Int) = values().first { it.value() == value }
+        }
     }
 
     companion object {
-        private const val PADDING_DEFAULT = 30f
-        private const val CURSOR_WIDTH = 5f
+        private const val UNDERLINE_INPUT_HEIGHT_DEFAULT = 10f
+        private const val PADDING_LEFT_DEFAULT = 30f
+        private const val PADDING_TOP_DEFAULT = 9f
+        private const val CURSOR_WIDTH_DEFAULT = 5f
+        private const val DELAY_CURSOR = 500L
     }
 
     interface OnInputVerificationCodeListener {

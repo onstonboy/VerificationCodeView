@@ -12,6 +12,18 @@ class MainActivity : AppCompatActivity(), VerificationCodeView.OnInputVerificati
         setContentView(R.layout.activity_main)
 
         verificationView.setOnInputVerificationCodeListener(this)
+
+        styleUnderLine.autoLinkMask
+
+        styleBox.setOnClickListener {
+            verificationView.style = VerificationCodeView.Style.BOX
+            verificationView.refresh()
+        }
+
+        styleUnderLine.setOnClickListener {
+            verificationView.style = VerificationCodeView.Style.UNDERLINE
+            verificationView.refresh()
+        }
     }
 
     override fun onInputVerificationCodeComplete() {
