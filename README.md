@@ -20,4 +20,5 @@ Step 2. Add the dependency
 	}
 
 Demo:
-![](demo_VCV.gif)
+
+[![Screenshot from Gyazo](https://gyazo.com/85fa6771c8740ef78bb027911f0584ab/raw)](https://gyazo.com/85fa6771c8740ef78bb027911f0584ab)
