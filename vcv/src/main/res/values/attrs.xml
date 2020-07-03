@@ -4,7 +4,6 @@
         <attr name="vcv_spacingItem" format="dimension"/>
         <attr name="vcv_inputWidth" format="dimension"/>
         <attr name="vcv_inputHeight" format="dimension"/>
-        <attr name="vcv_cursorHeight" format="dimension"/>
         <attr name="vcv_radius" format="dimension"/>
         <attr name="vcv_inputCount" format="integer"/>
         <attr name="vcv_lineColor" format="color"/>

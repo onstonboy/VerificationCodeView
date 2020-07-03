@@ -11,6 +11,9 @@ import android.text.InputType
 import android.text.TextWatcher
 import android.util.AttributeSet
 import android.util.Log
+import androidx.annotation.ColorInt
+import androidx.annotation.ColorRes
+import androidx.annotation.DimenRes
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.content.ContextCompat
 import kotlin.math.ceil
@@ -18,17 +21,15 @@ import kotlin.math.min
 
 class VerificationCodeView : AppCompatEditText {
 
-    private var mSpaceItem: Float = DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_20)
-    private var mInputWidth: Float = DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_30)
-    private var mInputHeight: Float = DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_5)
-    private var mCursorHeight: Float = DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_5)
+    private var mSpaceItem: Float = resources.getDimension(R.dimen.dp_20)
+    private var mInputWidth: Float = resources.getDimension(R.dimen.dp_30)
+    private var mInputHeight: Float = resources.getDimension(R.dimen.dp_56)
     private var mLineColor: Int = ContextCompat.getColor(context, android.R.color.black)
     private var mLineActiveColor: Int = ContextCompat.getColor(context, R.color.color_active)
     private var mTextColor: Int = ContextCompat.getColor(context, android.R.color.black)
     private var mCursorColor: Int = ContextCompat.getColor(context, android.R.color.black)
-    private var mTextSize: Float =
-        DimensionUtils.getDimensionWithScaledDensity(context, R.dimen.sp_18)
-    private var mRadius: Float = DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_5)
+    private var mTextSize: Float = resources.getDimension(R.dimen.sp_18)
+    private var mRadius: Float = resources.getDimension(R.dimen.dp_5)
     private var mInputCount: Int = 6
     private var mLinePaint = Paint()
     private var mLineFocusPaint = Paint()
@@ -40,7 +41,7 @@ class VerificationCodeView : AppCompatEditText {
     private var mOldTextLength = 0
     private var mIsDrawCursor = true
     private var mDrawingCursor = false
-    private var mStyle: Style = Style.UNDERLINE
+    private var mStyle: Style = Style.BOX
     private var mHandler = Handler()
     private var mRunnable: Runnable? = null
     private var mOnInputVerificationCode: OnInputVerificationCodeListener? = null
@@ -52,67 +53,19 @@ class VerificationCodeView : AppCompatEditText {
             field = value
         }
 
-    constructor(context: Context) : super(context)
+    constructor(context: Context) : super(context) {
+        onCreate()
+    }
 
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(
         context, attrs, defStyleAttr
-    )
+    ) {
+        initAttributeSet(attrs)
+        onCreate()
+    }
 
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
-        val typeArray =
-            context.obtainStyledAttributes(attrs, R.styleable.VerificationCodeView, 0, 0)
-        try {
-            mSpaceItem = typeArray.getDimension(
-                R.styleable.VerificationCodeView_vcv_spacingItem,
-                DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_20)
-            )
-            mInputWidth = typeArray.getDimension(
-                R.styleable.VerificationCodeView_vcv_inputWidth,
-                DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_30)
-            )
-            mInputHeight = typeArray.getDimension(
-                R.styleable.VerificationCodeView_vcv_inputHeight,
-                DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_5)
-            )
-            mCursorHeight = typeArray.getDimension(
-                R.styleable.VerificationCodeView_vcv_cursorHeight,
-                DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_5)
-            )
-            mRadius = typeArray.getDimension(
-                R.styleable.VerificationCodeView_vcv_radius,
-                DimensionUtils.getDimensionWithDensity(context, R.dimen.dp_5)
-            )
-            mInputCount = typeArray.getInt(
-                R.styleable.VerificationCodeView_vcv_inputCount, 6
-            )
-            mTextSize = typeArray.getDimension(
-                R.styleable.VerificationCodeView_vcv_textSize,
-                DimensionUtils.getDimensionWithScaledDensity(context, R.dimen.sp_18)
-            )
-            mStyle = Style.fromValue(
-                typeArray.getInt(
-                    R.styleable.VerificationCodeView_vcv_style, Style.UNDERLINE.value()
-                )
-            )
-            mLineColor = typeArray.getColor(
-                R.styleable.VerificationCodeView_vcv_lineColor,
-                ContextCompat.getColor(context, android.R.color.black)
-            )
-            mLineActiveColor = typeArray.getColor(
-                R.styleable.VerificationCodeView_vcv_lineActiveColor,
-                ContextCompat.getColor(context, R.color.color_active)
-            )
-            mTextColor = typeArray.getColor(
-                R.styleable.VerificationCodeView_vcv_textColor,
-                ContextCompat.getColor(context, android.R.color.black)
-            )
-            mCursorColor = typeArray.getColor(
-                R.styleable.VerificationCodeView_vcv_cursorColor,
-                ContextCompat.getColor(context, android.R.color.black)
-            )
-        } finally {
-            typeArray.recycle()
-        }
+        initAttributeSet(attrs)
         onCreate()
     }
 
@@ -219,10 +172,115 @@ class VerificationCodeView : AppCompatEditText {
         mOnInputVerificationCode = onInputVerificationCode
     }
 
+    fun setHexColorCursor(@ColorInt color: Int) {
+        mCursorColor = color
+    }
+
+    fun setColorCursor(@ColorRes colorId: Int) {
+        mCursorColor = ContextCompat.getColor(context, colorId)
+    }
+
+    fun setHexColorText(@ColorInt color: Int) {
+        mTextColor = color
+    }
+
+    fun setColorText(@ColorRes colorId: Int) {
+        mTextColor = ContextCompat.getColor(context, colorId)
+    }
+
+    fun setHexColorLine(@ColorInt color: Int) {
+        mLineColor = color
+    }
+
+    fun setColorLine(@ColorRes colorId: Int) {
+        mLineColor = ContextCompat.getColor(context, colorId)
+    }
+
+    fun setHexColorLineActive(@ColorInt color: Int) {
+        mLineActiveColor = color
+    }
+
+    fun setColorLineActive(@ColorRes colorId: Int) {
+        mLineActiveColor = ContextCompat.getColor(context, colorId)
+    }
+
+    fun setHeightInput(@DimenRes dimenId: Int) {
+        mInputHeight = resources.getDimension(dimenId)
+    }
+
+    fun setWidthInput(@DimenRes dimenId: Int) {
+        mInputWidth = resources.getDimension(dimenId)
+    }
+
+    fun setRadius(@DimenRes dimenId: Int) {
+        mRadius = resources.getDimension(dimenId)
+    }
+
+    fun setTextSize(@DimenRes dimenId: Int) {
+        mTextSize = resources.getDimension(dimenId)
+    }
+
+    fun setSpacingItem(@DimenRes dimenId: Int) {
+        mSpaceItem = resources.getDimension(dimenId)
+    }
+
     fun refresh() {
-        updateLinePaint()
+        initPaints()
         updateInputViewOffsets()
         invalidate()
+    }
+
+    private fun initAttributeSet(attrs: AttributeSet) {
+        val typeArray =
+            context.obtainStyledAttributes(attrs, R.styleable.VerificationCodeView, 0, 0)
+        try {
+            mSpaceItem = typeArray.getDimension(
+                R.styleable.VerificationCodeView_vcv_spacingItem,
+                resources.getDimension(R.dimen.dp_20)
+            )
+            mInputWidth = typeArray.getDimension(
+                R.styleable.VerificationCodeView_vcv_inputWidth,
+                resources.getDimension(R.dimen.dp_30)
+            )
+            mInputHeight = typeArray.getDimension(
+                R.styleable.VerificationCodeView_vcv_inputHeight,
+                resources.getDimension(R.dimen.dp_56)
+            )
+            mRadius = typeArray.getDimension(
+                R.styleable.VerificationCodeView_vcv_radius,
+                resources.getDimension(R.dimen.dp_5)
+            )
+            mInputCount = typeArray.getInt(
+                R.styleable.VerificationCodeView_vcv_inputCount, 6
+            )
+            mTextSize = typeArray.getDimension(
+                R.styleable.VerificationCodeView_vcv_textSize,
+                resources.getDimension(R.dimen.sp_18)
+            )
+            mStyle = Style.fromValue(
+                typeArray.getInt(
+                    R.styleable.VerificationCodeView_vcv_style, Style.BOX.value()
+                )
+            )
+            mLineColor = typeArray.getColor(
+                R.styleable.VerificationCodeView_vcv_lineColor,
+                ContextCompat.getColor(context, android.R.color.black)
+            )
+            mLineActiveColor = typeArray.getColor(
+                R.styleable.VerificationCodeView_vcv_lineActiveColor,
+                ContextCompat.getColor(context, R.color.color_active)
+            )
+            mTextColor = typeArray.getColor(
+                R.styleable.VerificationCodeView_vcv_textColor,
+                ContextCompat.getColor(context, android.R.color.black)
+            )
+            mCursorColor = typeArray.getColor(
+                R.styleable.VerificationCodeView_vcv_cursorColor,
+                ContextCompat.getColor(context, android.R.color.black)
+            )
+        } finally {
+            typeArray.recycle()
+        }
     }
 
     private fun onCreate() {
@@ -304,7 +362,7 @@ class VerificationCodeView : AppCompatEditText {
         mTextPaint.apply {
             color = mTextColor
             textSize = mTextSize
-            isAntiAlias = true
+//            isAntiAlias = true
             style = Paint.Style.FILL
             typeface = this@VerificationCodeView.typeface
         }
@@ -340,15 +398,11 @@ class VerificationCodeView : AppCompatEditText {
         val viewLeft = PADDING_LEFT_DEFAULT
         for (index in 0 until mInputCount) {
             val viewBottom = when (mStyle) {
-                Style.UNDERLINE -> {
-                    mInputHeight
-                }
+                Style.UNDERLINE -> mInputHeight
                 else -> mInputHeight - PADDING_TOP_DEFAULT
             }
             val top = when (mStyle) {
-                Style.UNDERLINE -> {
-                    viewBottom - UNDERLINE_INPUT_HEIGHT_DEFAULT
-                }
+                Style.UNDERLINE -> viewBottom - UNDERLINE_INPUT_HEIGHT_DEFAULT
                 else -> PADDING_TOP_DEFAULT
             }
             if (mInputViewOffsets.isEmpty()) {
