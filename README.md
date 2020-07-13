@@ -34,7 +34,6 @@ Attributes:
 | `vcv_inputCount` | dimension | `6` |
 | `vcv_lineColor` | dimension | `#ff000000` |
 | `vcv_lineActiveColor` | dimension | `#2D7FF9` |
-| `vcv_cursorColor` | dimension | `#ff000000` |
 | `vcv_textColor` | dimension | `#ff000000` |
 | `vcv_textSize` | dimension | `18sp` |
 | `vcv_style` | dimension | `UNDERLINE` or `BOX` |
