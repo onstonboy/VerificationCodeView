@@ -464,6 +464,6 @@ class VerificationCodeView : AppCompatEditText {
 
     interface OnInputVerificationCodeListener {
         fun onInputVerificationCodeComplete()
-        fun onInputVerificationCodeUnComplete()
+        fun onInputVerificationCodeUnComplete() = Unit
     }
 }
