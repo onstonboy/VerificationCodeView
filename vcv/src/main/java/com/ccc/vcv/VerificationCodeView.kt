@@ -316,6 +316,8 @@ class VerificationCodeView : AppCompatEditText {
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
                 if (s.length >= mInputCount) {
                     mOnInputVerificationCode?.onInputVerificationCodeComplete()
+                } else {
+                    mOnInputVerificationCode?.onInputVerificationCodeUnComplete()
                 }
             }
         })
@@ -362,7 +364,6 @@ class VerificationCodeView : AppCompatEditText {
         mTextPaint.apply {
             color = mTextColor
             textSize = mTextSize
-//            isAntiAlias = true
             style = Paint.Style.FILL
             typeface = this@VerificationCodeView.typeface
         }
@@ -463,5 +464,6 @@ class VerificationCodeView : AppCompatEditText {
 
     interface OnInputVerificationCodeListener {
         fun onInputVerificationCodeComplete()
+        fun onInputVerificationCodeUnComplete()
     }
 }
