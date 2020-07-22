@@ -338,6 +338,10 @@ class VerificationCodeView : AppCompatEditText {
 
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
                 mIsPaste = count != 1
+                val end = start + count
+                if (mIsPaste && start > 0 && start < s.length && end > 0 && end < s.length) {
+                    mContentPaste = getTrueContentOTP(s.substring(start, end))
+                }
                 if (s.length >= mInputCount) {
                     mOnInputVerificationCode?.onInputVerificationCodeComplete()
                 } else {
@@ -475,14 +479,18 @@ class VerificationCodeView : AppCompatEditText {
             clipboard.primaryClipDescription?.hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN) == true
         ) {
             val content = clipboard.primaryClip?.getItemAt(0)?.text?.toString() ?: ""
-            if (content.isDigitsOnly()) {
-                if (mTexts.size + content.length > mInputCount) {
-                    content.substring(0, mInputCount - mTexts.size)
-                } else {
-                    content
-                }
+            getTrueContentOTP(content)
+        } else {
+            ""
+        }
+    }
+
+    private fun getTrueContentOTP(content: String): String {
+        return if (content.isDigitsOnly()) {
+            if (mTexts.size + content.length > mInputCount) {
+                content.substring(0, mInputCount - mTexts.size)
             } else {
-                ""
+                content
             }
         } else {
             ""
