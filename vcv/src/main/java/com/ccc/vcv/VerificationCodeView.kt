@@ -1,5 +1,7 @@
 package com.ccc.vcv
 
+import android.content.ClipDescription
+import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -16,6 +18,7 @@ import androidx.annotation.ColorRes
 import androidx.annotation.DimenRes
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.content.ContextCompat
+import androidx.core.text.isDigitsOnly
 import kotlin.math.ceil
 import kotlin.math.min
 
@@ -45,6 +48,9 @@ class VerificationCodeView : AppCompatEditText {
     private var mHandler = Handler()
     private var mRunnable: Runnable? = null
     private var mOnInputVerificationCode: OnInputVerificationCodeListener? = null
+    private var mClipBoard: ClipboardManager? = null
+    private var mIsPaste = false
+    private var mContentPaste = ""
 
     var style: Style = mStyle
         get() = mStyle
@@ -284,10 +290,15 @@ class VerificationCodeView : AppCompatEditText {
     }
 
     private fun onCreate() {
+        initData()
         initViews()
         initPaints()
         handleEvents()
         runDrawCursor()
+    }
+
+    private fun initData() {
+        mClipBoard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     }
 
     private fun initPaints() {
@@ -301,10 +312,22 @@ class VerificationCodeView : AppCompatEditText {
             override fun afterTextChanged(s: Editable) {
                 if (s.length > mInputCount) return
                 if (mOldTextLength > s.length) {
-                    mTexts.removeAt(mTexts.lastIndex)
-                    invalidate()
+                    if (mTexts.lastIndex > -1) {
+                        mTexts.removeAt(mTexts.lastIndex)
+                        invalidate()
+                    }
                 } else {
-                    mTexts.add(s[s.length - 1])
+                    if (mIsPaste) {
+                        for (index in mContentPaste.indices) {
+                            if (mTexts.size >= mInputCount) return
+                            mTexts.add(mContentPaste[index])
+                        }
+                    } else {
+                        if (s.length - 1 >= 0) {
+                            mTexts.add(s[s.length - 1])
+                        }
+                    }
+                    mContentPaste = ""
                     invalidate()
                 }
             }
@@ -314,6 +337,7 @@ class VerificationCodeView : AppCompatEditText {
             }
 
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                mIsPaste = count != 1
                 if (s.length >= mInputCount) {
                     mOnInputVerificationCode?.onInputVerificationCodeComplete()
                 } else {
@@ -344,7 +368,13 @@ class VerificationCodeView : AppCompatEditText {
     }
 
     private fun initViews() {
-        isLongClickable = false
+        setOnLongClickListener {
+            mContentPaste = getContentClipBoard()
+            if (mContentPaste.isNotBlank()) {
+                this@VerificationCodeView.append(mContentPaste)
+            }
+            true
+        }
         height = ceil(mInputHeight).toInt()
         setBackgroundColor(ContextCompat.getColor(context, android.R.color.transparent))
         setTextColor(ContextCompat.getColor(context, android.R.color.transparent))
@@ -437,6 +467,26 @@ class VerificationCodeView : AppCompatEditText {
             mHandler.postDelayed(mRunnable, DELAY_CURSOR)
         }
         mHandler.postDelayed(mRunnable, DELAY_CURSOR)
+    }
+
+    private fun getContentClipBoard(): String {
+        val clipboard = mClipBoard ?: return ""
+        return if (clipboard.hasPrimaryClip() &&
+            clipboard.primaryClipDescription?.hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN) == true
+        ) {
+            val content = clipboard.primaryClip?.getItemAt(0)?.text?.toString() ?: ""
+            if (content.isDigitsOnly()) {
+                if (mTexts.size + content.length > mInputCount) {
+                    content.substring(0, mInputCount - mTexts.size)
+                } else {
+                    content
+                }
+            } else {
+                ""
+            }
+        } else {
+            ""
+        }
     }
 
     enum class Style {
