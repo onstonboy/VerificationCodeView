@@ -339,7 +339,7 @@ class VerificationCodeView : AppCompatEditText {
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
                 mIsPaste = count != 1
                 val end = start + count
-                if (mIsPaste && start > 0 && start < s.length && end > 0 && end < s.length) {
+                if (mIsPaste && start >= 0 && start <= s.length && end >= start && end <= s.length) {
                     mContentPaste = getTrueContentOTP(s.substring(start, end))
                 }
                 if (s.length >= mInputCount) {
