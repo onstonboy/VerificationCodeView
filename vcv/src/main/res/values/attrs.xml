@@ -11,6 +11,8 @@
         <attr name="vcv_cursorColor" format="color"/>
         <attr name="vcv_textColor" format="color"/>
         <attr name="vcv_textSize" format="dimension"/>
+        <attr name="vcv_lineHeight" format="dimension"/>
+        <attr name="vcv_strokeSize" format="dimension"/>
         <attr name="vcv_style" format="flags">
             <flag name="underline" value="0"/>
             <flag name="box" value="1"/>
