@@ -4,6 +4,7 @@
     <dimen name="sp_24">24sp</dimen>
 
     <dimen name="dp_1">1dp</dimen>
+    <dimen name="dp_1_25">1.25dp</dimen>
     <dimen name="dp_1_5">1.5dp</dimen>
     <dimen name="dp_2">2dp</dimen>
     <dimen name="dp_5">5dp</dimen>

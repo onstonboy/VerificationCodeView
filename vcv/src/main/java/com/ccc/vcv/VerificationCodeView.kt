@@ -27,6 +27,8 @@ class VerificationCodeView : AppCompatEditText {
     private var mSpaceItem: Float = resources.getDimension(R.dimen.dp_20)
     private var mInputWidth: Float = resources.getDimension(R.dimen.dp_30)
     private var mInputHeight: Float = resources.getDimension(R.dimen.dp_56)
+    private var mLineHeight: Float = resources.getDimension(R.dimen.dp_1_25)
+    private var mStrokeSize: Float = resources.getDimension(R.dimen.dp_1_5)
     private var mLineColor: Int = ContextCompat.getColor(context, android.R.color.black)
     private var mLineActiveColor: Int = ContextCompat.getColor(context, R.color.color_active)
     private var mTextColor: Int = ContextCompat.getColor(context, android.R.color.black)
@@ -230,6 +232,14 @@ class VerificationCodeView : AppCompatEditText {
         mSpaceItem = resources.getDimension(dimenId)
     }
 
+    fun setUnderLineHeight(@DimenRes dimenId: Int) {
+        mLineHeight = resources.getDimension(dimenId)
+    }
+
+    fun setStrokeSize(@DimenRes dimenId: Int) {
+        mStrokeSize = resources.getDimension(dimenId)
+    }
+
     fun refresh() {
         initPaints()
         updateInputViewOffsets()
@@ -251,6 +261,14 @@ class VerificationCodeView : AppCompatEditText {
             mInputHeight = typeArray.getDimension(
                 R.styleable.VerificationCodeView_vcv_inputHeight,
                 resources.getDimension(R.dimen.dp_56)
+            )
+            mLineHeight = typeArray.getDimension(
+                R.styleable.VerificationCodeView_vcv_lineHeight,
+                resources.getDimension(R.dimen.dp_1_25)
+            )
+            mStrokeSize = typeArray.getDimension(
+                R.styleable.VerificationCodeView_vcv_strokeSize,
+                resources.getDimension(R.dimen.dp_1_5)
             )
             mRadius = typeArray.getDimension(
                 R.styleable.VerificationCodeView_vcv_radius,
@@ -416,12 +434,12 @@ class VerificationCodeView : AppCompatEditText {
             else -> {
                 mLinePaint = Paint().apply {
                     style = Paint.Style.STROKE
-                    strokeWidth = context.resources.getDimension(R.dimen.dp_1_5)
+                    strokeWidth = mStrokeSize
                     color = mLineColor
                 }
                 mLineFocusPaint = Paint().apply {
                     style = Paint.Style.STROKE
-                    strokeWidth = context.resources.getDimension(R.dimen.dp_1_5)
+                    strokeWidth = mStrokeSize
                     color = mLineActiveColor
                 }
             }
@@ -432,13 +450,10 @@ class VerificationCodeView : AppCompatEditText {
         mInputViewOffsets.clear()
         val viewLeft = PADDING_LEFT_DEFAULT
         for (index in 0 until mInputCount) {
-            val viewBottom = when (mStyle) {
-                Style.UNDERLINE -> mInputHeight
-                else -> mInputHeight - PADDING_TOP_DEFAULT
-            }
+            val viewBottom = mInputHeight - mStrokeSize
             val top = when (mStyle) {
-                Style.UNDERLINE -> viewBottom - UNDERLINE_INPUT_HEIGHT_DEFAULT
-                else -> PADDING_TOP_DEFAULT
+                Style.UNDERLINE -> viewBottom - mLineHeight
+                else -> mStrokeSize
             }
             if (mInputViewOffsets.isEmpty()) {
                 mInputViewOffsets.add(
@@ -513,7 +528,6 @@ class VerificationCodeView : AppCompatEditText {
     }
 
     companion object {
-        private const val UNDERLINE_INPUT_HEIGHT_DEFAULT = 10f
         private const val PADDING_LEFT_DEFAULT = 30f
         private const val PADDING_TOP_DEFAULT = 9f
         private const val CURSOR_WIDTH_DEFAULT = 5f
